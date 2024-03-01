@@ -1,52 +1,36 @@
 import fs from "fs";
 import readline from "readline";
+import { shuffle, shuffleEntry, shuffleHome } from "./utility/shuffle.js";
 
 const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
 });
 
-let input = "";
+const home = () => {
+    return new Promise<string>((resolve, reject) => {
+        rl.question("\n\n====================\n\nWelcome to Util-Bowl!\nThere is options:\n\n1. directory shuffle\n\nWhat would you like to execute? (Enter a number, q to exit) ", (answer) => {
+            resolve(answer)
+        });
+    })
+}
 
-rl.on("line", (line) => {
-    input = line;
-    rl.close();
-});
-
-rl.on("close", () => {
-    fs.readdir(input, (err, files) => {
-        if (err) {
-            console.log(`Path ${input} is not a valid path.`);
-            return;
+const main = async () => {
+    let loop = true;
+    await home().then(async (input: string) => {
+        switch (input) {
+            case "1": await shuffleEntry(rl)
+                break;
+            case "q":
+                loop = false;
+                break;
+            default:
+                break;
         }
-        
-        files = files.filter(file => !fs.lstatSync(input + "/" + file).isDirectory());
-        const filenames = [];
-        const extensions = [];
-        for (const file of files) {
-            if (file.indexOf(".") === -1) {
-                filenames.push(null)
-                extensions.push(file)
-                continue;
-            }
-
-            const split = file.split(".")
-            const last = split.pop()
-            filenames.push(split.join())
-            extensions.push(last)
-        }
-
-        const shuffledFilenames = filenames
-            .map(value => ({value, sort: Math.random()}))
-            .sort((a, b) => a.sort - b.sort)
-            .map(({value}) => value)
-
-        for (const file of files) {
-            fs.copyFileSync(`${input}/${file}`, `${input}/${file}.tmp`)
-            fs.unlinkSync(`${input}/${file}`)
-        }
-        for (const [idx, filename] of filenames.entries()) {
-            fs.renameSync(`${input}/${filename === null ? extensions[idx] : `${filename}.${extensions[idx]}`}.tmp`, `${input}/${shuffledFilenames[idx] === null ? extensions[idx] : `${shuffledFilenames[idx]}.${extensions[idx]}`}`)
-        }
+        return;
     });
-});
+    if (loop) await main();
+    rl.close();
+}
+
+main();
