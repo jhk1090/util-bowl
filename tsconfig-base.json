@@ -1,6 +1,6 @@
 {
     "compilerOptions": {
-        "target": "ES5",
+        "target": "ESNext",
         "allowJs": true,
         "allowSyntheticDefaultImports": true,
         "baseUrl": "src",
@@ -16,7 +16,8 @@
         "rootDir": "src",
         "skipLibCheck": true,
         "strict": true,
-        "traceResolution": false
+        "traceResolution": false,
+        "lib": ["ES2023"]
     },
     "compileOnSave": false,
     "exclude": ["node_modules", "dist"],

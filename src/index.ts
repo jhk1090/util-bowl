@@ -1,34 +1,44 @@
 import fs from "fs";
 import readline from "readline";
-import { shuffle, shuffleEntry, shuffleHome } from "./utility/shuffle.js";
+import { shuffleEntry } from "./utility/shuffle.js";
+import { explorerEntry } from "./utility/explorer.js";
+import path from "path";
+import { Command } from "./utility/command.js";
 
 const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
 });
 
-const home = () => {
-    return new Promise<string>((resolve, reject) => {
-        rl.question("\n\n====================\n\nWelcome to Util-Bowl!\nThere is options:\n\n1. directory shuffle\n\nWhat would you like to execute? (Enter a number, q to exit) ", (answer) => {
-            resolve(answer)
-        });
-    })
-}
-
 const main = async () => {
     let loop = true;
-    await home().then(async (input: string) => {
-        switch (input) {
-            case "1": await shuffleEntry(rl)
-                break;
-            case "q":
-                loop = false;
-                break;
-            default:
-                break;
-        }
-        return;
+    const session = new Command({
+        noHelp: true,
+        label: "\n\n====================\n\nWelcome to Util-Bowl!\nThere is options:\n\n1. Integrated Explorer\n2. Directory Shuffle\n\nWhat would you like to execute? (Enter a number, q to exit) ",
+        commands: {
+            "1": {
+                run: async (c, res, rej) => {
+                    await explorerEntry(rl, path.resolve());
+                    res(null);
+                },
+            },
+            "2": {
+                run: async (c, res, rej) => {
+                    await shuffleEntry(rl);
+                    res(null);
+                },
+            },
+            q: {
+                run: (c, res, rej) => {
+                    loop = false;
+                    res(null);
+                },
+            },
+        },
     });
+    try {
+        await session.execute(rl);
+    } catch {}
     if (loop) await main();
     rl.close();
 }

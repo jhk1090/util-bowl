@@ -1,70 +1,89 @@
 import fs from "fs";
 import readline from "readline";
+import { prompt, confirm } from "./command.js"
 
-export const shuffleHome = (rl: readline.Interface) => {
-    return new Promise<string>((resolve, reject) => {
-        rl.question("\n\n====================\n\n[Directory Shuffle]\nWhat directory would you like to shuffle? ", (answer) => {
-            resolve(answer)
-        });
+export const shuffleHome = async (rl: readline.Interface) => {
+    const location = await prompt(rl, "\n\n====================\n\n[Directory Shuffle]\nWhat directory would you like to shuffle? (:q to exit) ")
+    return new Promise<string>(async (resolve, reject) => {
+        if (location === ":q") {
+            reject("QUIT")
+            return;
+        }
+        if (location === "") {
+            reject()
+            return;
+        }
+        const decide = await confirm(rl, `\nTarget path is ${location}. Are you sure? (y/n) `);
+        if (decide) {
+            resolve(location)
+        } else {
+            reject()
+        }
+        return;
     })
 }
 
 export const shuffleEntry = async (rl: readline.Interface) => {
-    let loop = true;
-    await shuffleHome(rl)
-            .then(async (location: string) => {
-                return shuffle(location);
-            })
-            .then(() => {
-                loop = false;
-                return;
-            })
-            .catch(() => {
-                return;
-            });
-    if (loop) await shuffleEntry(rl);
+    let message = "";
+    try {
+        const location = await shuffleHome(rl);
+        message = await shuffle(location);
+    } catch (e) {
+        if (e === "QUIT") {
+            return;
+        }
+        message = e as string;
+    }
+
+    message !== undefined ? console.log(message) : undefined;
+    await shuffleEntry(rl);
 };
 
 export const shuffle = (location: string) => {
-    return new Promise<void>(async (resolve, reject) => {
-        fs.readdir(location, (err, files) => {
-            if (err) {
-                console.log(`Path ${location} is not a valid path.`)
-                reject(err)
-                return
-            }
-            
-            files = files.filter(file => !fs.lstatSync(`${location}/${file}`).isDirectory())
-            const filenames = [];
-            const extensions = [];
-            for (const file of files) {
-                if (file.indexOf(".") === -1) {
-                    filenames.push(null)
-                    extensions.push(file)
-                    continue;
+    return new Promise<string>(async (resolve, reject) => {
+        fs.readdir(location, async (err, files) => {
+            const filenames: (string | null)[] = [];
+            const extensions: string[] = [];
+            const shuffledFilenames = await new Promise<(string | null)[]>((innerResolve, innerReject) => {
+                if (err) {
+                    reject(`Path ${location} is not a valid path.`);
+                    return;
                 }
-        
-                const split = file.split(".")
-                const last = split.pop()
-                filenames.push(split.join())
-                extensions.push(last)
+
+                files = files.filter((file) => !fs.lstatSync(`${location}/${file}`).isDirectory());
+                for (const file of files) {
+                    if (file.indexOf(".") === -1) {
+                        filenames.push(null);
+                        extensions.push(file);
+                        continue;
+                    }
+
+                    const split = file.split(".");
+                    const last = split.pop() as string;
+                    filenames.push(split.join());
+                    extensions.push(last);
+                }
+
+                const shuffledFilenames = filenames
+                    .map((value) => ({ value, sort: Math.random() }))
+                    .sort((a, b) => a.sort - b.sort)
+                    .map(({ value }) => value);
+
+                innerResolve(shuffledFilenames);
+            });
+            for await (const file of files) {
+                fs.copyFileSync(`${location}/${file}`, `${location}/${file}.tmp`);
+                fs.unlinkSync(`${location}/${file}`);
             }
-        
-            const shuffledFilenames = filenames
-                .map(value => ({value, sort: Math.random()}))
-                .sort((a, b) => a.sort - b.sort)
-                .map(({value}) => value)
-        
-            for (const file of files) {
-                fs.copyFileSync(`${location}/${file}`, `${location}/${file}.tmp`)
-                fs.unlinkSync(`${location}/${file}`)
-            }
-            for (const [idx, filename] of filenames.entries()) {
-                fs.renameSync(`${location}/${filename === null ? extensions[idx] : `${filename}.${extensions[idx]}`}.tmp`, `${location}/${shuffledFilenames[idx] === null ? extensions[idx] : `${shuffledFilenames[idx]}.${extensions[idx]}`}`)
+            for await (const [idx, filename] of filenames.entries()) {
+                fs.rename(
+                    `${location}/${filename === null ? extensions[idx] : `${filename}.${extensions[idx]}`}.tmp`,
+                    `${location}/${shuffledFilenames[idx] === null ? extensions[idx] : `${shuffledFilenames[idx]}.${extensions[idx]}`}`,
+                    () => {}
+                );
             }
 
-            console.log(`Path ${location} is successfully shuffled.`)
-            resolve();
+            resolve(`Path ${location} is successfully shuffled.`);
             return;
         })
     })
