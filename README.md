@@ -11,6 +11,9 @@ Filesystem trick.
 # How to Execute
 
 ```sh
+# build (will generate dist folder)
+npm run build
+
 # ECMAScript
 node dist/mjs
 
