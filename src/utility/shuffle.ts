@@ -42,14 +42,14 @@ export const shuffleEntry = async (rl: readline.Interface) => {
 export const shuffle = (location: string) => {
     return new Promise<string>(async (resolve, reject) => {
         fs.readdir(location, async (err, files) => {
+            if (err) {
+                resolve(`Path ${location} is not a valid path.`);
+                return;
+            }
+
             const filenames: (string | null)[] = [];
             const extensions: string[] = [];
             const shuffledFilenames = await new Promise<(string | null)[]>((innerResolve, innerReject) => {
-                if (err) {
-                    reject(`Path ${location} is not a valid path.`);
-                    return;
-                }
-
                 files = files.filter((file) => !fs.lstatSync(`${location}/${file}`).isDirectory());
                 for (const file of files) {
                     if (file.indexOf(".") === -1) {

@@ -4,6 +4,7 @@ import { shuffleEntry } from "./utility/shuffle.js";
 import { explorerEntry } from "./utility/explorer.js";
 import path from "path";
 import { Command } from "./utility/command.js";
+import { fileboomEntry } from "./utility/fileboom.js";
 
 const rl = readline.createInterface({
     input: process.stdin,
@@ -14,7 +15,7 @@ const main = async () => {
     let loop = true;
     const session = new Command({
         noHelp: true,
-        label: "\n\n====================\n\nWelcome to Util-Bowl!\nThere is options:\n\n1. Integrated Explorer\n2. Directory Shuffle\n\nWhat would you like to execute? (Enter a number, q to exit) ",
+        label: "\n\n====================\n\nWelcome to Util-Bowl!\nThere are options:\n\n1. Integrated Explorer\n2. Directory Shuffle\n3. Fileboom\n\nWhat would you like to execute? (Enter a number, q to exit) ",
         commands: {
             "1": {
                 run: async (c, res, rej) => {
@@ -27,6 +28,12 @@ const main = async () => {
                     await shuffleEntry(rl);
                     res(null);
                 },
+            },
+            "3": {
+                run: async (c, res, rej) => {
+                    await fileboomEntry(rl);
+                    res(null);
+                }
             },
             q: {
                 run: (c, res, rej) => {

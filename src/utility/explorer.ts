@@ -3,6 +3,7 @@ import path from "path";
 import readline from "readline";
 import { shuffle } from "./shuffle.js";
 import { Command, confirm } from "./command.js";
+import { fileboomEntry, fileboomHome } from "./fileboom.js";
 
 export const explorerEntry = async (rl: readline.Interface, location: string, message: string | null = null, commandSession?: Command) => {
     let loop = true;
@@ -47,9 +48,10 @@ export const explorerEntry = async (rl: readline.Interface, location: string, me
                 "shuffle": {
                     run: (command, resolve, reject) => {
                         (async () => {
-                            const decide = await confirm(rl, `\nTarget path is ${process.cwd()}. Are you sure? (y/n) `);
+                            const directory = command.toSpliced(0, 1).join(" ");
+                            const decide = await confirm(rl, `\nTarget path is ${directory === "" ? process.cwd(): directory}. Are you sure? (y/n) `);
                             if (decide) {
-                                const message = await shuffle(process.cwd())
+                                const message = await shuffle(directory === "" ? process.cwd(): directory)
                                 await(() => new Promise<void>((resolve) => setTimeout(resolve, 100)))();
                                 reject(message);
                             } else {
@@ -59,7 +61,28 @@ export const explorerEntry = async (rl: readline.Interface, location: string, me
                     },
                     data: {
                         help: {
-                            description: "Shuffle directory"
+                            description: "Shuffle directory",
+                            args: {
+                                "directory": "targeted directory"
+                            }
+                        }
+                    }
+                },
+                "fileboom": {
+                    run: (command, resolve, reject) => {
+                        (async () => {
+                            const directory = command.toSpliced(0, 1).join(" ");
+                            const message = await fileboomEntry(rl, { type: "reinput", from: "locationSure", misc: directory === "" ? process.cwd(): directory }, "external");
+                            await(() => new Promise<void>((resolve) => setTimeout(resolve, 100)))();
+                            reject(message);
+                        })();
+                    },
+                    data: {
+                        help: {
+                            description: "File-booming!",
+                            args: {
+                                "directory": "targeted directory"
+                            }
                         }
                     }
                 }
