@@ -1,6 +1,12 @@
 # Util-bowl
 
-Filesystem trick. Useless Project#1
+Filesystem trick.
+
+# Purpose
+
+ - Learn npm package uploading
+ - Learn how to support ECMAScript, CommonJS, Typescript at the same time using typescript environment
+ - Learn how to build properly on nodejs
 
 # How to Execute
 
